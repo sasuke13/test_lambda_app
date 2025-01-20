@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from mangum import Mangum
+import logging
 
 app = FastAPI()
 handler = Mangum(app)
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 @app.get("/")
 def read_root():
+    logger.info("Processing request to root endpoint")
     return {"message": "Hello, World!"}
 
 @app.get("/items")

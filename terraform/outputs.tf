@@ -11,4 +11,12 @@ output "lambda_function_name" {
 output "lambda_function_arn" {
   description = "Lambda function ARN"
   value       = aws_lambda_function.api_lambda.arn
+}
+
+output "cloudwatch_log_groups" {
+  description = "CloudWatch Log Group names"
+  value = {
+    api_gateway = aws_cloudwatch_log_group.api_gw.name
+    lambda      = "/aws/lambda/${aws_lambda_function.api_lambda.function_name}"
+  }
 } 
