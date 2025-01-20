@@ -6,12 +6,11 @@ terraform {
     }
   }
   
-  # Comment out the backend configuration initially
-  # backend "s3" {
-  #   bucket = "mindbots-test-lambda-bucket"
-  #   key    = "lambda-api/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
+  backend "s3" {
+    bucket = "mindbots-test-lambda-bucket"
+    key    = "lambda-api/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {

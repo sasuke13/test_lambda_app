@@ -37,18 +37,25 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-root
         
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         
-      - name: Setup Terraform Backend
-        run: |
-          chmod +x scripts/init_terraform_backend.sh
-          ./scripts/init_terraform_backend.sh
-          
       - name: Build Lambda package and layer
         run: |
           poetry run python scripts/build_layer.py
           poetry run python scripts/build_lambda.py
+          
+      - name: Setup Terraform Backend
+        run: |
+          chmod +x scripts/init_terraform_backend.sh
+          ./scripts/init_terraform_backend.sh
           
       - name: Terraform Init
         run: |
@@ -59,53 +66,3 @@ jobs:
         run: |
           cd terraform
           terraform apply -auto-approve
-        
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          
-      - name: Deploy Layer
-        run: |
-          echo "Publishing layer..."
-          LAYER_VERSION=$(aws lambda publish-layer-version \
-            --layer-name test-lambda-layer \
-            --zip-file fileb://lambda_layer.zip \
-            --compatible-runtimes python3.11 \
-            --query 'Version' \
-            --output text)
-          echo "Layer version: $LAYER_VERSION"
-          echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
-          
-      - name: Update Lambda Configuration
-        run: |
-          aws lambda update-function-configuration \
-            --function-name test-lambda-function \
-            --layers "arn:aws:lambda:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:layer:test-lambda-layer:${{ env.LAYER_VERSION }}" \
-            --handler "src.main.handler" \
-            --timeout 30 \
-            --memory-size 256
-          
-          # Wait for the configuration update to complete
-          aws lambda wait function-updated \
-            --function-name test-lambda-function
-          
-      - name: Deploy to Lambda
-        run: |
-          echo "Deploying to Lambda function..."
-          aws lambda update-function-code \
-            --function-name test-lambda-function \
-            --zip-file fileb://lambda_function.zip \
-            --publish
-          
-          # Verify deployment
-          aws lambda wait function-updated \
-            --function-name test-lambda-function
-          
-          echo "Deployment completed successfully"
-          
-      - name: Configure API Gateway
-        run: |
-          poetry run python scripts/create_api_gateway.py
