@@ -70,7 +70,11 @@ jobs:
           aws lambda update-function-configuration \
             --function-name test-lambda-function \
             --layers "arn:aws:lambda:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:layer:test-lambda-layer:${{ env.LAYER_VERSION }}"
-        
+          
+          # Wait for the configuration update to complete
+          aws lambda wait function-updated \
+            --function-name test-lambda-function
+          
       - name: Deploy to Lambda
         run: |
           echo "Deploying to Lambda function..."
