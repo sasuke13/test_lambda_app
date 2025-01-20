@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 def build_lambda_package():
     # Create a temporary build directory
@@ -9,25 +10,21 @@ def build_lambda_package():
         shutil.rmtree(build_dir)
     os.makedirs(build_dir)
 
-    # Export dependencies using poetry with correct command
-    subprocess.run([
-        "poetry", 
-        "export", 
-        "--without-hashes", 
-        "-f", "requirements.txt", 
-        "-o", f"{build_dir}/requirements.txt"
-    ], check=True)
+    # Get the virtual environment path
+    result = subprocess.run(
+        ["poetry", "env", "info", "--path"],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    venv_path = result.stdout.strip()
+    site_packages = os.path.join(venv_path, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
 
-    # Install dependencies into the build directory
-    subprocess.run([
-        "pip", 
-        "install", 
-        "-r", f"{build_dir}/requirements.txt", 
-        "-t", build_dir
-    ], check=True)
+    # Copy site-packages to build directory
+    shutil.copytree(site_packages, os.path.join(build_dir, "site-packages"))
 
     # Copy your application code
-    shutil.copytree("src", f"{build_dir}/src")
+    shutil.copytree("src", os.path.join(build_dir, "src"))
 
     # Create deployment zip
     shutil.make_archive("lambda_function", "zip", build_dir)
