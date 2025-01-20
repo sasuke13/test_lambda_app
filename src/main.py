@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from mangum import Mangum
 import logging
+from pydantic import BaseModel
+
+class Item(BaseModel):
+    q: str | None = None
 
 app = FastAPI()
 handler = Mangum(app)
@@ -22,5 +26,5 @@ def read_item():
     }
 
 @app.post("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+def create_item(item_id: int, item: Item):
+    return {"item_id": item_id, "q": item.q}
