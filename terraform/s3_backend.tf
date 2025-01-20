@@ -4,11 +4,7 @@ resource "aws_s3_bucket" "terraform_state" {
   # Prevent accidental deletion of this S3 bucket
   lifecycle {
     prevent_destroy = true
-    ignore_changes = [
-      versioning,
-      server_side_encryption_configuration,
-      lifecycle_rule
-    ]
+    ignore_changes = all  # Ignore all changes to existing bucket
   }
 }
 

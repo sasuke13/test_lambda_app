@@ -31,6 +31,10 @@ resource "aws_lambda_function" "api_lambda" {
 
   lifecycle {
     create_before_destroy = true
+    replace_triggered_by = [
+      # Triggers replacement when the zip file changes
+      filemd5("../lambda_function.zip")
+    ]
   }
 
   layers = [aws_lambda_layer_version.dependencies.arn]
