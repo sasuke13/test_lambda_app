@@ -37,13 +37,32 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-root
         
-      - name: Build Lambda package
+      - name: Build Lambda package and layer
         run: |
+          poetry run python scripts/build_layer.py
           poetry run python scripts/build_lambda.py
-          if [ ! -f lambda_function.zip ]; then
-            echo "Lambda package build failed"
+          if [ ! -f lambda_function.zip ] || [ ! -f lambda_layer.zip ]; then
+            echo "Build failed"
             exit 1
           fi
+        
+      - name: Deploy Layer
+        run: |
+          echo "Publishing layer..."
+          LAYER_VERSION=$(aws lambda publish-layer-version \
+            --layer-name test-lambda-layer \
+            --zip-file fileb://lambda_layer.zip \
+            --compatible-runtimes python3.11 \
+            --query 'Version' \
+            --output text)
+          echo "Layer version: $LAYER_VERSION"
+          echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
+          
+      - name: Update Lambda Configuration
+        run: |
+          aws lambda update-function-configuration \
+            --function-name test-lambda-function \
+            --layers "arn:aws:lambda:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:layer:test-lambda-layer:${{ env.LAYER_VERSION }}"
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
