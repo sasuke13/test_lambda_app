@@ -26,6 +26,12 @@ resource "aws_lambda_function" "api_lambda" {
   runtime         = "python3.11"
   timeout         = 30
   memory_size     = 256
+  
+  publish = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   layers = [aws_lambda_layer_version.dependencies.arn]
 }

@@ -1,9 +1,14 @@
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "mindbots-test-lambda-bucket"
+  bucket = var.terraform_state_bucket
 
   # Prevent accidental deletion of this S3 bucket
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [
+      versioning,
+      server_side_encryption_configuration,
+      lifecycle_rule
+    ]
   }
 }
 

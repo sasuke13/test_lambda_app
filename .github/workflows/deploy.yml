@@ -57,10 +57,15 @@ jobs:
           chmod +x scripts/init_terraform_backend.sh
           ./scripts/init_terraform_backend.sh
           
-      - name: Terraform Init
+      - name: Terraform Plan
         run: |
           cd terraform
-          terraform init
+          terraform plan -out=tfplan || exit_code=$?
+          if [ $exit_code -eq 1 ]; then
+            echo "Some resources already exist, proceeding with state import..."
+            terraform import aws_s3_bucket.terraform_state ${var.terraform_state_bucket} || true
+            terraform plan -out=tfplan
+          fi
           
       - name: Terraform Apply
         run: |
