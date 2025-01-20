@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry config virtualenvs.in-project true
-          poetry install --no-interaction
+          poetry install --no-root
         
       - name: Build Lambda package
         run: |
