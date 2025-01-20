@@ -5,3 +5,7 @@ build/
 layer/
 lambda_function.zip
 lambda_layer.zip
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
