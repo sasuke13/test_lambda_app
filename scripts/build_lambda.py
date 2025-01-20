@@ -9,15 +9,14 @@ def build_lambda_package():
         shutil.rmtree(build_dir)
     os.makedirs(build_dir)
 
-    # Export dependencies using poetry with updated command
+    # Export dependencies using poetry with correct command
     subprocess.run([
         "poetry", 
         "export", 
-        "--format", "requirements.txt", 
         "--without-hashes", 
-        "--output", f"{build_dir}/requirements.txt",
-        "--without-urls"
-    ], check=True)  # Added check=True to raise an error if the command fails
+        "-f", "requirements.txt", 
+        "-o", f"{build_dir}/requirements.txt"
+    ], check=True)
 
     # Install dependencies into the build directory
     subprocess.run([
