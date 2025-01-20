@@ -1,0 +1,68 @@
+name: Deploy to Lambda
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual trigger
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+          cache: 'pip'  # Enables caching of pip dependencies
+          
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+          
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+        
+      - name: Build Lambda package
+        run: |
+          poetry run python scripts/build_lambda.py
+          if [ ! -f lambda_function.zip ]; then
+            echo "Lambda package build failed"
+            exit 1
+          fi
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Deploy to Lambda
+        run: |
+          echo "Deploying to Lambda function..."
+          aws lambda update-function-code \
+            --function-name test-lambda-function \
+            --zip-file fileb://lambda_function.zip \
+            --publish
+          
+          # Verify deployment
+          aws lambda wait function-updated \
+            --function-name test-lambda-function
+          
+          echo "Deployment completed successfully"
