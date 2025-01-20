@@ -20,8 +20,14 @@ def build_lambda_package():
     venv_path = result.stdout.strip()
     site_packages = os.path.join(venv_path, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
 
-    # Copy site-packages to build directory
-    shutil.copytree(site_packages, os.path.join(build_dir, "site-packages"))
+    # Copy dependencies directly to build directory (not in site-packages subdirectory)
+    for item in os.listdir(site_packages):
+        source = os.path.join(site_packages, item)
+        destination = os.path.join(build_dir, item)
+        if os.path.isdir(source):
+            shutil.copytree(source, destination)
+        else:
+            shutil.copy2(source, destination)
 
     # Copy your application code
     shutil.copytree("src", os.path.join(build_dir, "src"))
