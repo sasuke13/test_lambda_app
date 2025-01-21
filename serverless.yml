@@ -1,0 +1,28 @@
+service: fastapi-lambda
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+
+functions:
+  api:
+    handler: src.main.handler
+    name: ${self:service}-${self:provider.stage}
+    memorySize: 256
+    timeout: 30
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: '*'
+
+layers:
+  dependencies:
+    name: ${self:service}-layer-${self:provider.stage}
+    description: Python dependencies for FastAPI
+    compatibleRuntimes:
+      - python3.11
+    path: layer 

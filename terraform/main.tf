@@ -103,4 +103,21 @@ resource "aws_lambda_permission" "api_gw" {
 resource "aws_cloudwatch_log_group" "api_gw" {
   name              = "/aws/api-gw/${aws_apigatewayv2_api.lambda_api.name}"
   retention_in_days = 30
+}
+
+# Deploy using Serverless Framework
+resource "null_resource" "serverless_deploy" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = "serverless deploy --stage ${var.environment}"
+  }
+}
+
+# Other AWS resources managed by Terraform
+resource "aws_cloudwatch_log_group" "api_logs" {
+  name              = "/aws/lambda/${data.aws_lambda_function.api.function_name}"
+  retention_in_days = 30
 } 

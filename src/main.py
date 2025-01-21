@@ -21,7 +21,7 @@ def read_root():
 def read_item():
     return {
         "items": ["item1", "item2", "item3"],
-        "name": "John",
+        "name": "John Doe",
         "description": "This is a test description"
     }
 

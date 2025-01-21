@@ -47,31 +47,28 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         
-      - name: Build Lambda package and layer
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Build Lambda Package
         run: |
+          poetry install
           poetry run python scripts/build_layer.py
-          poetry run python scripts/build_lambda.py
-          
-      - name: Setup Terraform Backend
-        run: |
-          chmod +x scripts/init_terraform_backend.sh
-          ./scripts/init_terraform_backend.sh
-          
-      - name: Terraform Plan
-        run: |
-          cd terraform
-          # Try to import existing resources first
-          terraform import aws_lambda_function.api_lambda test-lambda-function || true
-          terraform import aws_s3_bucket.terraform_state mindbots-test-lambda-bucket || true
-          
-          # Now run the plan
-          terraform plan -out=tfplan || exit_code=$?
-          if [ $exit_code -eq 1 ]; then
-            echo "Plan failed, but continuing..."
-            terraform plan -out=tfplan -refresh=true
-          fi
-          
-      - name: Terraform Apply
+
+      - name: Deploy with Serverless
+        run: serverless deploy --stage prod
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Other Infrastructure
         run: |
           cd terraform
+          terraform init
           terraform apply -auto-approve

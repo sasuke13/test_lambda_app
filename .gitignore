@@ -9,3 +9,5 @@ lambda_layer.zip
 .terraform/
 *.tfstate
 *.tfstate.*
+.serverless/
+node_modules/
