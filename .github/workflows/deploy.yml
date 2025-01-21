@@ -40,14 +40,17 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless
+      - name: Install Serverless and dependencies
+        run: |
+          npm init -y
+          npm install --save-dev serverless
+          npm install
 
       - name: Build Lambda Layer
         run: poetry run python scripts/build_layer.py
 
       - name: Deploy with Serverless
-        run: serverless deploy --stage prod
+        run: npx serverless deploy --stage prod
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

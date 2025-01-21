@@ -1,0 +1,9 @@
+{
+  "name": "fastapi-lambda",
+  "version": "1.0.0",
+  "description": "FastAPI Lambda Function",
+  "dependencies": {},
+  "devDependencies": {
+    "serverless": "^4.4.19"
+  }
+} 

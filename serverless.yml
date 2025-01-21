@@ -45,11 +45,9 @@ layers:
 
 package:
   patterns:
-    - '!./**'               # Exclude everything first
-    - 'src/**/*.py'         # Include Python files in src
-    - 'src/**/__init__.py'  # Include init files
-    - '!src/**/*.pyc'       # Exclude compiled Python files
-    - '!src/**/__pycache__/**'
+    - 'src/**'             # Include all files in src directory
+    - '!src/**/*.pyc'      # Exclude compiled Python files
+    - '!src/__pycache__/**'
     - '!src/**/.pytest_cache/**'
     - '!src/**/.coverage'
     - '!src/**/tests/**'
