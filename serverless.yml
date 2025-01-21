@@ -24,8 +24,16 @@ custom:
     layer:
       name: python-deps
       description: Python dependencies
-    dockerizePip: non-linux
-    usePoetry: true
+    dockerizePip: true
+    noDeploy:
+      - coverage
+      - pytest
+      - pytest-cov
+      - black
+      - mypy
+      - ruff
+    useDownloadCache: true
+    useStaticCache: true
 
 functions:
   api:
