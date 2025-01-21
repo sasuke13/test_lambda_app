@@ -48,15 +48,11 @@ jobs:
           poetry install --no-root
           poetry run pip freeze > requirements.txt
 
-      - name: Remove existing stack (if exists)
+      - name: Clean up existing resources
         continue-on-error: true
         run: |
-          serverless remove --stage prod
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_TOKEN }}
+          aws logs delete-log-group --log-group-name /aws/lambda/fastapi-lambda-prod || true
+          serverless remove --stage prod || true
 
       - name: Deploy with Serverless
         run: |
