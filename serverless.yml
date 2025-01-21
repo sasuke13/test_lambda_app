@@ -58,11 +58,8 @@ plugins:
   - serverless-python-requirements
 
 package:
+  individually: true
   patterns:
-    - '!node_modules/**'
-    - '!venv/**'
-    - '!.venv/**'
-    - '!__pycache__/**'
-    - '!.pytest_cache/**'
-    - '!.coverage'
-    - '!tests/**'
+    - 'src/**'
+    - '!**'
+    - '!src/**/__pycache__/**'
