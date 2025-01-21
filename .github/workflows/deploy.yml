@@ -47,10 +47,20 @@ jobs:
           npm install
 
       - name: Build Lambda Layer
-        run: poetry run python scripts/build_layer.py
+        run: |
+          poetry run python scripts/build_layer.py
+          ls -la layer/python/  # Debug layer contents
+
+      - name: Package Lambda Function
+        run: |
+          mkdir -p .serverless
+          poetry export -f requirements.txt --output requirements.txt
+          pip install -r requirements.txt -t src/
+          ls -la src/  # Debug function contents
 
       - name: Deploy with Serverless
-        run: npx serverless deploy --stage prod
+        run: |
+          npx serverless deploy --stage prod --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
