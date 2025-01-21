@@ -38,16 +38,31 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
       - name: Install Serverless Framework and plugins
         run: |
           npm install -g serverless
           npm install --save-dev serverless-python-requirements
+          serverless --version
 
       - name: Verify Poetry installation
-        run: poetry --version
+        run: |
+          poetry --version
+          poetry config --list
+          poetry env info
+
+      - name: Debug environment
+        run: |
+          pwd
+          ls -la
+          cat pyproject.toml
+          docker info
 
       - name: Deploy with Serverless
-        run: serverless deploy --stage prod --verbose
+        run: |
+          SLS_DEBUG=* serverless deploy --stage prod --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
