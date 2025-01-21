@@ -29,7 +29,8 @@ jobs:
       - name: Generate requirements.txt
         run: |
           poetry config virtualenvs.create false
-          poetry export --format requirements.txt --output requirements.txt --without-hashes
+          poetry install --no-root
+          poetry run pip freeze > requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
