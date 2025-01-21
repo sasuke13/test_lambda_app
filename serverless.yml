@@ -19,14 +19,21 @@ provider:
             - logs:PutLogEvents
           Resource: '*'
 
+custom:
+  pythonRequirements:
+    layer:
+      name: python-deps
+      description: Python dependencies
+    dockerizePip: true
+    usePoetry: true
+    removePoetryDependencies: true
+
 functions:
   api:
     handler: src.main.handler
     name: ${self:service}-${self:provider.stage}
     memorySize: 256
     timeout: 30
-    layers:
-      - {Ref: DependenciesLambdaLayer}
     events:
       - httpApi:
           path: /{proxy+}
@@ -34,22 +41,15 @@ functions:
     environment:
       API_ENV: ${self:provider.stage}
 
-layers:
-  dependencies:
-    name: ${self:service}-layer-${self:provider.stage}
-    description: Python dependencies for FastAPI
-    compatibleRuntimes:
-      - python3.11
-    path: layer
+plugins:
+  - serverless-python-requirements
 
 package:
   patterns:
-    - 'src/**'             # Include all files in src directory
-    - '!src/**/*.pyc'      # Exclude compiled Python files
-    - '!src/__pycache__/**'
-    - '!src/**/.pytest_cache/**'
-    - '!src/**/.coverage'
-    - '!src/**/tests/**'
     - '!node_modules/**'
     - '!venv/**'
-    - '!.venv/**' 
+    - '!.venv/**'
+    - '!__pycache__/**'
+    - '!.pytest_cache/**'
+    - '!.coverage'
+    - '!tests/**' 

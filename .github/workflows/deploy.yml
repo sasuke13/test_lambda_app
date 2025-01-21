@@ -21,19 +21,6 @@ jobs:
         with:
           python-version: '3.11'
           
-      - name: Install Poetry
-        run: |
-          pipx install poetry
-          poetry --version
-          
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create false
-          poetry install --no-root
-          
-      - name: Install dependencies
-        run: poetry install
-        
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -46,14 +33,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless
-
-      - name: Prepare Lambda Layer
+      - name: Install Serverless Framework and plugins
         run: |
-          mkdir -p layer/python
-          poetry export --format requirements.txt --without-hashes --without-urls > requirements.txt
-          pip install -r requirements.txt -t layer/python/
+          npm install -g serverless
+          npm install --save-dev serverless-python-requirements
 
       - name: Deploy with Serverless
         run: serverless deploy --stage prod --verbose
