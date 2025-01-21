@@ -24,14 +24,8 @@ custom:
     layer:
       name: python-deps
       description: Python dependencies
-    dockerizePip: true
+    dockerizePip: non-linux
     usePoetry: true
-    poetryWithoutHashes: true
-    poetryExportOptions: [
-      "--format=requirements.txt",
-      "--output=requirements.txt",
-      "--without-hashes"
-    ]
 
 functions:
   api:
