@@ -26,13 +26,12 @@ functions:
     memorySize: 256
     timeout: 30
     layers:
-      - !Ref DependenciesLambdaLayer
+      - {Ref: DependenciesLambdaLayer}
     events:
       - httpApi:
           path: /{proxy+}
           method: '*'
     environment:
-      # Add your function-specific env vars here
       API_ENV: ${self:provider.stage}
 
 layers:

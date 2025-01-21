@@ -41,30 +41,18 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Serverless and dependencies
-        run: |
-          npm init -y
-          npm install --save-dev serverless
-          npm install
+      - name: Install Serverless Framework
+        run: npm install -g serverless
 
-      - name: Build Lambda Layer
+      - name: Prepare Lambda Layer
         run: |
           mkdir -p layer/python
-          $HOME/.local/bin/poetry export --without-hashes --format requirements.txt > requirements.txt
+          poetry export --without-hashes --format requirements.txt > requirements.txt
           pip install -r requirements.txt -t layer/python/
-          ls -la layer/python/
-
-      - name: Package Lambda Function
-        run: |
-          mkdir -p .serverless
-          cp -r src/* .serverless/
-          ls -la .serverless/
 
       - name: Deploy with Serverless
-        run: |
-          npx serverless deploy --stage prod --verbose --aws-s3-accelerate
+        run: serverless deploy --stage prod --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_TOKEN }}
