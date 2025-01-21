@@ -55,6 +55,13 @@ jobs:
       - name: Install Serverless Framework
         run: npm install -g serverless
 
+      - name: Configure Serverless
+        run: |
+          echo "org: your-org" > ~/.serverless/config.yml
+          echo "app: your-app" >> ~/.serverless/config.yml
+          echo "service:" >> ~/.serverless/config.yml
+          echo "  token: ${{ secrets.SERVERLESS_TOKEN }}" >> ~/.serverless/config.yml
+
       - name: Build Lambda Package
         run: |
           poetry install
