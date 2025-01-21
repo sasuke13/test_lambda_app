@@ -36,6 +36,9 @@ custom:
     useStaticCache: true
     usePoetry: false
     requirementsPath: requirements.txt
+    zip: true
+    slim: true
+    layer: true
 
 functions:
   api:
@@ -43,6 +46,8 @@ functions:
     name: ${self:service}-${self:provider.stage}
     memorySize: 256
     timeout: 30
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
     events:
       - httpApi:
           path: /{proxy+}
