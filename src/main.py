@@ -15,7 +15,7 @@ logger.setLevel(logging.INFO)
 @app.get("/")
 def read_root():
     logger.info("Processing request to root endpoint")
-    return {"message": "Hello, World!"}
+    return {"message": "Hello, World and Lambda!"}
 
 @app.get("/items")
 def read_item():
