@@ -38,6 +38,7 @@ custom:
     requirementsPath: requirements.txt
     zip: true
     slim: true
+    cleanupZipHelper: true
 
 functions:
   api:
@@ -53,13 +54,20 @@ functions:
           method: '*'
     environment:
       API_ENV: ${self:provider.stage}
+    package:
+      patterns:
+        - 'src/**'
+        - '!src/**/__pycache__/**'
+        - '!requirements.txt'
+        - '!package*.json'
+        - '!poetry.lock'
+        - '!.requirements.zip'
+        - '!unzip_requirements.py'
 
 plugins:
   - serverless-python-requirements
 
 package:
   individually: true
-  patterns:
-    - 'src/**'
-    - '!**'
-    - '!src/**/__pycache__/**'
+  exclude:
+    - '**/*'
