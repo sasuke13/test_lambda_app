@@ -53,7 +53,7 @@ jobs:
           node-version: '18'
 
       - name: Install Serverless Framework
-        run: npm install -g serverless
+        run: npm install -g serverless@3.33.0
 
       - name: Build Lambda Package
         run: |
@@ -70,5 +70,4 @@ jobs:
       - name: Deploy Other Infrastructure
         run: |
           cd terraform
-          terraform init
           terraform apply -auto-approve
