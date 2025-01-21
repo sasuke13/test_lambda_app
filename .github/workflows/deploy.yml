@@ -48,6 +48,11 @@ jobs:
           poetry install --no-root
           poetry run pip freeze > requirements.txt
 
+      - name: Remove existing stack (if exists)
+        continue-on-error: true
+        run: |
+          serverless remove --stage prod
+
       - name: Deploy with Serverless
         run: |
           serverless deploy --stage prod --verbose
