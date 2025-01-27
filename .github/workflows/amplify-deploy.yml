@@ -95,6 +95,10 @@ jobs:
             "Parameters": {
               "env": {
                 "Type": "String"
+              },
+              "deploymentBucket": {
+                "Type": "String",
+                "Description": "S3 bucket for Lambda deployment"
               }
             },
             "Resources": {
@@ -102,22 +106,17 @@ jobs:
                 "Type": "AWS::Lambda::Function",
                 "Properties": {
                   "Code": {
-                    "S3Bucket": {
-                      "Ref": "deploymentBucket"
-                    },
-                    "S3Key": {
-                      "Fn::Join": ["", ["amplify-builds/fastapi-", {"Ref": "env"}, "-latest.zip"]]
-                    }
+                    "S3Bucket": {"Ref": "deploymentBucket"},
+                    "S3Key": {"Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"}
                   },
                   "Handler": "src.main.handler",
                   "Runtime": "python3.11",
                   "Timeout": 30,
                   "MemorySize": 256,
+                  "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
                   "Environment": {
                     "Variables": {
-                      "ENV": {
-                        "Ref": "env"
-                      }
+                      "ENV": {"Ref": "env"}
                     }
                   }
                 }
@@ -148,14 +147,49 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="fastapi-lambda-app-${APP_ID}-deployment"
           
-          # Update CloudFormation template with correct bucket
-          sed -i "s/deploymentBucket/${BUCKET_NAME}/g" amplify/backend/api/fastapi/fastapi-cloudformation-template.json
+          # Create the CloudFormation template with proper parameter
+          echo '{
+            "AWSTemplateFormatVersion": "2010-09-09",
+            "Description": "FastAPI Lambda function configuration",
+            "Parameters": {
+              "env": {
+                "Type": "String"
+              },
+              "deploymentBucket": {
+                "Type": "String",
+                "Description": "S3 bucket for Lambda deployment"
+              }
+            },
+            "Resources": {
+              "LambdaFunction": {
+                "Type": "AWS::Lambda::Function",
+                "Properties": {
+                  "Code": {
+                    "S3Bucket": {"Ref": "deploymentBucket"},
+                    "S3Key": {"Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"}
+                  },
+                  "Handler": "src.main.handler",
+                  "Runtime": "python3.11",
+                  "Timeout": 30,
+                  "MemorySize": 256,
+                  "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
+                  "Environment": {
+                    "Variables": {
+                      "ENV": {"Ref": "env"}
+                    }
+                  }
+                }
+              }
+            }
+          }' > amplify/backend/api/fastapi/fastapi-cloudformation-template.json
           
-          # Deploy CloudFormation stack directly
+          # Deploy CloudFormation stack with both parameters
           aws cloudformation deploy \
             --template-file amplify/backend/api/fastapi/fastapi-cloudformation-template.json \
             --stack-name amplify-fastapi-lamb-prod-201404 \
-            --parameter-overrides env=prod \
+            --parameter-overrides \
+              env=prod \
+              deploymentBucket=${BUCKET_NAME} \
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
           
