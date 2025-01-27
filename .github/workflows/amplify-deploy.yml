@@ -19,8 +19,6 @@ permissions:
   repository-projects: read
   security-events: read
   statuses: read
-  # Add webhook permissions
-  repository-hooks: write
 
 jobs:
   deploy:
@@ -53,7 +51,7 @@ jobs:
             APP_ID=$(aws amplify create-app \
               --name "${APP_NAME}" \
               --platform "WEB" \
-              --oauth-token ${{ secrets.GITHUB_TOKEN }} \
+              --oauth-token ${{ secrets.GH_PAT }} \
               --repository "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
               --query "app.appId" \
               --output text)
