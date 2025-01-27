@@ -127,8 +127,7 @@ jobs:
       - name: Create deployment bucket
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
-          # Convert to lowercase and remove special characters
-          BUCKET_NAME=$(echo "fastapilambdaapp${APP_ID}deployment" | tr '[:upper:]' '[:lower:]')
+          BUCKET_NAME="lambda-deploy-${APP_ID}"
           
           # Create bucket
           aws s3api create-bucket \
@@ -146,16 +145,15 @@ jobs:
         timeout-minutes: 10
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
-          BUCKET_NAME=$(echo "fastapilambdaapp${APP_ID}deployment" | tr '[:upper:]' '[:lower:]')
+          BUCKET_NAME="lambda-deploy-${APP_ID}"
           
-          # Use the existing complete template from amplify/backend/api/fastapi/fastapi-cloudformation-template.json
-          # Just update the deploymentBucket parameter
+          # Update CloudFormation template
           sed -i "s/deploymentBucket/${BUCKET_NAME}/g" amplify/backend/api/fastapi/fastapi-cloudformation-template.json
           
-          # Deploy CloudFormation stack with both parameters
+          # Deploy CloudFormation stack
           aws cloudformation deploy \
             --template-file amplify/backend/api/fastapi/fastapi-cloudformation-template.json \
-            --stack-name amplify-fastapi-lamb-prod-201404 \
+            --stack-name lambda-stack-${APP_ID} \
             --parameter-overrides \
               env=prod \
               deploymentBucket=${BUCKET_NAME} \
@@ -164,7 +162,7 @@ jobs:
           
           # Get the API URL from stack outputs
           API_URL=$(aws cloudformation describe-stacks \
-            --stack-name amplify-fastapi-lamb-prod-201404 \
+            --stack-name lambda-stack-${APP_ID} \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
             --output text)
           

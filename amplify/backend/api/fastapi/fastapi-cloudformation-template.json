@@ -53,7 +53,9 @@
     "ApiGatewayRestApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Name": "fastapi-lambda-${env}"
+        "Name": {
+          "Fn::Sub": "fastapi-lambda-${env}"
+        }
       }
     },
     "ApiGatewayResource": {
