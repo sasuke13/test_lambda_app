@@ -11,27 +11,6 @@
     }
   },
   "Resources": {
-    "LambdaFunction": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Code": {
-          "S3Bucket": {"Ref": "deploymentBucket"},
-          "S3Key": {
-            "Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"
-          }
-        },
-        "Handler": "src.main.handler",
-        "Runtime": "python3.11",
-        "Timeout": 30,
-        "MemorySize": 256,
-        "Environment": {
-          "Variables": {
-            "ENV": {"Ref": "env"}
-          }
-        },
-        "Role": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] }
-      }
-    },
     "LambdaExecutionRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -50,6 +29,28 @@
         "ManagedPolicyArns": [
           "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
         ]
+      }
+    },
+    "LambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["LambdaExecutionRole"],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {"Ref": "deploymentBucket"},
+          "S3Key": {
+            "Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"
+          }
+        },
+        "Handler": "src.main.handler",
+        "Runtime": "python3.11",
+        "Timeout": 30,
+        "MemorySize": 256,
+        "Environment": {
+          "Variables": {
+            "ENV": {"Ref": "env"}
+          }
+        },
+        "Role": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] }
       }
     },
     "ApiGatewayRestApi": {
