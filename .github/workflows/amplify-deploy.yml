@@ -133,6 +133,19 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="lambdadeploy${APP_ID}"
           
+          # Update Lambda function code directly
+          FUNCTION_NAME=$(aws cloudformation describe-stack-resources \
+            --stack-name "lambdastack${APP_ID}" \
+            --query "StackResources[?ResourceType=='AWS::Lambda::Function'].PhysicalResourceId" \
+            --output text)
+          
+          if [ ! -z "$FUNCTION_NAME" ]; then
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --s3-bucket "${BUCKET_NAME}" \
+              --s3-key "amplify-builds/fastapi-prod-latest.zip"
+          fi
+          
           # Deploy CloudFormation stack
           aws cloudformation deploy \
             --template-file amplify/backend/api/fastapi/fastapi-cloudformation-template.json \
