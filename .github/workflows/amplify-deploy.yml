@@ -2,7 +2,7 @@ name: Deploy to Amplify
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, amplify_deployment ]
   workflow_dispatch:
 
 jobs:
