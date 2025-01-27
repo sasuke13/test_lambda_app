@@ -102,11 +102,17 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="lambdadeploy${APP_ID}"
           
+          # Create bucket if it doesn't exist
+          aws s3api create-bucket \
+            --bucket ${BUCKET_NAME} \
+            --region ${{ secrets.AWS_REGION }} \
+            || true
+          
           # Install dependencies to a local directory
           mkdir python
           poetry config virtualenvs.create false
-          poetry install --no-dev
-          pip install --target ./python -r requirements.txt
+          poetry install --without dev
+          pip install -r <(poetry export) --target ./python
           
           # Create deployment package with dependencies
           cd python
