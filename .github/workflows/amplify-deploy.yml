@@ -147,22 +147,19 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="lambdadeploy${APP_ID}"
           
-          # Update CloudFormation template
-          sed -i "s/deploymentBucket/${BUCKET_NAME}/g" amplify/backend/api/fastapi/fastapi-cloudformation-template.json
-          
           # Deploy CloudFormation stack
           aws cloudformation deploy \
             --template-file amplify/backend/api/fastapi/fastapi-cloudformation-template.json \
-            --stack-name lambdastack${APP_ID} \
+            --stack-name "lambdastack${APP_ID}" \
             --parameter-overrides \
-              env=prod \
-              deploymentBucket=${BUCKET_NAME} \
-            --capabilities CAPABILITY_IAM \
+              deploymentBucket="${BUCKET_NAME}" \
+              env="prod" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
           
           # Get the API URL from stack outputs
           API_URL=$(aws cloudformation describe-stacks \
-            --stack-name lambdastack${APP_ID} \
+            --stack-name "lambdastack${APP_ID}" \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
             --output text)
           
