@@ -147,62 +147,9 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="fastapi-lambda-app-${APP_ID}-deployment"
           
-          # Create the CloudFormation template with proper parameter and role
-          echo '{
-            "AWSTemplateFormatVersion": "2010-09-09",
-            "Description": "FastAPI Lambda function configuration",
-            "Parameters": {
-              "env": {
-                "Type": "String"
-              },
-              "deploymentBucket": {
-                "Type": "String",
-                "Description": "S3 bucket for Lambda deployment"
-              }
-            },
-            "Resources": {
-              "LambdaExecutionRole": {
-                "Type": "AWS::IAM::Role",
-                "Properties": {
-                  "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                      {
-                        "Effect": "Allow",
-                        "Principal": {
-                          "Service": ["lambda.amazonaws.com"]
-                        },
-                        "Action": ["sts:AssumeRole"]
-                      }
-                    ]
-                  },
-                  "ManagedPolicyArns": [
-                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-                  ]
-                }
-              },
-              "LambdaFunction": {
-                "Type": "AWS::Lambda::Function",
-                "DependsOn": ["LambdaExecutionRole"],
-                "Properties": {
-                  "Code": {
-                    "S3Bucket": {"Ref": "deploymentBucket"},
-                    "S3Key": {"Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"}
-                  },
-                  "Handler": "src.main.handler",
-                  "Runtime": "python3.11",
-                  "Timeout": 30,
-                  "MemorySize": 256,
-                  "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
-                  "Environment": {
-                    "Variables": {
-                      "ENV": {"Ref": "env"}
-                    }
-                  }
-                }
-              }
-            }
-          }' > amplify/backend/api/fastapi/fastapi-cloudformation-template.json
+          # Use the existing complete template from amplify/backend/api/fastapi/fastapi-cloudformation-template.json
+          # Just update the deploymentBucket parameter
+          sed -i "s/deploymentBucket/${BUCKET_NAME}/g" amplify/backend/api/fastapi/fastapi-cloudformation-template.json
           
           # Deploy CloudFormation stack with both parameters
           aws cloudformation deploy \
