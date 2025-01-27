@@ -88,19 +88,31 @@ jobs:
             }
           }' > amplify/backend/backend-config.json
           
-      - name: Create deployment bucket
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          
+      - name: Create deployment package
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="lambdadeploy${APP_ID}"
           
-          # Create bucket
-          aws s3api create-bucket \
-            --bucket ${BUCKET_NAME} \
-            --region ${{ secrets.AWS_REGION }} \
-            || true
+          # Install dependencies to a local directory
+          mkdir python
+          poetry config virtualenvs.create false
+          poetry install --no-dev
+          pip install --target ./python -r requirements.txt
           
-          # Create the deployment package
-          zip -r function.zip src/ pyproject.toml poetry.lock
+          # Create deployment package with dependencies
+          cd python
+          zip -r9 ../function.zip .
+          cd ..
+          zip -g function.zip src/* pyproject.toml poetry.lock
           
           # Upload to S3
           aws s3 cp function.zip s3://${BUCKET_NAME}/amplify-builds/fastapi-prod-latest.zip
