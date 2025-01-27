@@ -127,7 +127,8 @@ jobs:
       - name: Create deployment bucket
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
-          BUCKET_NAME="fastapi_lambda_app_${APP_ID}_deployment"
+          # Convert to lowercase and remove special characters
+          BUCKET_NAME=$(echo "fastapilambdaapp${APP_ID}deployment" | tr '[:upper:]' '[:lower:]')
           
           # Create bucket
           aws s3api create-bucket \
@@ -145,7 +146,7 @@ jobs:
         timeout-minutes: 10
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
-          BUCKET_NAME="fastapi_lambda_app_${APP_ID}_deployment"
+          BUCKET_NAME=$(echo "fastapilambdaapp${APP_ID}deployment" | tr '[:upper:]' '[:lower:]')
           
           # Use the existing complete template from amplify/backend/api/fastapi/fastapi-cloudformation-template.json
           # Just update the deploymentBucket parameter
