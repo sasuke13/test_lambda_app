@@ -109,16 +109,21 @@ jobs:
             || true
           
           # Install dependencies to a local directory
-          mkdir python
+          mkdir -p python
           poetry config virtualenvs.create false
           poetry install --without dev
-          pip install -r <(poetry export) --target ./python
+          poetry export --format requirements.txt --output requirements.txt --without-hashes
+          pip install -r requirements.txt --target ./python
+          
+          # Copy source files to python directory
+          cp -r src python/
+          cp pyproject.toml python/
+          cp poetry.lock python/
           
           # Create deployment package with dependencies
           cd python
-          zip -r9 ../function.zip .
+          zip -r9 ../function.zip ./*
           cd ..
-          zip -g function.zip src/* pyproject.toml poetry.lock
           
           # Upload to S3
           aws s3 cp function.zip s3://${BUCKET_NAME}/amplify-builds/fastapi-prod-latest.zip
