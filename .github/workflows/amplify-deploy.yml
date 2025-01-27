@@ -88,42 +88,6 @@ jobs:
             }
           }' > amplify/backend/backend-config.json
           
-          # Create API config with corrected S3Key syntax
-          echo '{
-            "AWSTemplateFormatVersion": "2010-09-09",
-            "Description": "FastAPI Lambda function configuration",
-            "Parameters": {
-              "env": {
-                "Type": "String"
-              },
-              "deploymentBucket": {
-                "Type": "String",
-                "Description": "S3 bucket for Lambda deployment"
-              }
-            },
-            "Resources": {
-              "LambdaFunction": {
-                "Type": "AWS::Lambda::Function",
-                "Properties": {
-                  "Code": {
-                    "S3Bucket": {"Ref": "deploymentBucket"},
-                    "S3Key": {"Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"}
-                  },
-                  "Handler": "src.main.handler",
-                  "Runtime": "python3.11",
-                  "Timeout": 30,
-                  "MemorySize": 256,
-                  "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
-                  "Environment": {
-                    "Variables": {
-                      "ENV": {"Ref": "env"}
-                    }
-                  }
-                }
-              }
-            }
-          }' > amplify/backend/api/fastapi/fastapi-cloudformation-template.json
-          
       - name: Create deployment bucket
         run: |
           APP_ID="${{ steps.create_app.outputs.app_id }}"
