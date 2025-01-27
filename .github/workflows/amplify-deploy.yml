@@ -88,7 +88,7 @@ jobs:
             }
           }' > amplify/backend/backend-config.json
           
-          # Create API config
+          # Create API config with corrected S3Key syntax
           echo '{
             "AWSTemplateFormatVersion": "2010-09-09",
             "Description": "FastAPI Lambda function configuration",
@@ -105,7 +105,9 @@ jobs:
                     "S3Bucket": {
                       "Ref": "deploymentBucket"
                     },
-                    "S3Key": "amplify-builds/fastapi-${env}-latest.zip"
+                    "S3Key": {
+                      "Fn::Join": ["", ["amplify-builds/fastapi-", {"Ref": "env"}, "-latest.zip"]]
+                    }
                   },
                   "Handler": "src.main.handler",
                   "Runtime": "python3.11",
