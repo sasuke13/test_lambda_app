@@ -4,6 +4,10 @@
   "Parameters": {
     "env": {
       "Type": "String"
+    },
+    "deploymentBucket": {
+      "Type": "String",
+      "Description": "S3 bucket for Lambda deployment"
     }
   },
   "Resources": {
@@ -11,10 +15,10 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
-          "S3Bucket": {
-            "Ref": "deploymentBucket"
-          },
-          "S3Key": "amplify-builds/fastapi-${env}-latest.zip"
+          "S3Bucket": {"Ref": "deploymentBucket"},
+          "S3Key": {
+            "Fn::Sub": "amplify-builds/fastapi-${env}-latest.zip"
+          }
         },
         "Handler": "src.main.handler",
         "Runtime": "python3.11",
@@ -22,9 +26,7 @@
         "MemorySize": 256,
         "Environment": {
           "Variables": {
-            "ENV": {
-              "Ref": "env"
-            }
+            "ENV": {"Ref": "env"}
           }
         },
         "Role": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] }
