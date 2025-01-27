@@ -148,17 +148,16 @@ jobs:
           # Update CloudFormation template with correct bucket
           sed -i "s/deploymentBucket/${BUCKET_NAME}/g" amplify/backend/api/fastapi/fastapi-cloudformation-template.json
           
-          # Check if amplify folder exists and remove it
-          rm -rf .amplify/
-
-          # Initialize Amplify project with force flag
-          amplify init \
+          # Pull existing backend environment
+          amplify pull \
             --appId ${APP_ID} \
             --envName prod \
-            --yes \
-            --forcePush
+            --yes
           
-          # Push changes with allow-destructive-updates
+          # Update existing resources
+          amplify update api
+          
+          # Push updates
           amplify push \
             --yes \
             --allow-destructive-updates
