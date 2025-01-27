@@ -1,0 +1,10 @@
+{
+  "api": {
+    "fastapi": {
+      "service": "Lambda",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "build": true
+    }
+  }
+} 

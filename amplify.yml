@@ -1,0 +1,21 @@
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - pip install poetry
+        - poetry config virtualenvs.create false
+        - poetry install --no-dev
+        - poetry run pip freeze > requirements.txt
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'
+frontend:
+  phases:
+    build:
+      commands: []
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*' 

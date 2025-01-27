@@ -1,0 +1,118 @@
+name: Deploy to Amplify
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Install Amplify CLI
+        run: npm install -g @aws-amplify/cli
+        
+      - name: Create or Get Amplify App
+        id: create_app
+        run: |
+          APP_NAME="fastapi-lambda-app"
+          
+          # Try to get existing app
+          EXISTING_APP=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
+          
+          if [ -z "$EXISTING_APP" ]; then
+            echo "Creating new Amplify app..."
+            # Create new app
+            APP_ID=$(aws amplify create-app \
+              --name "${APP_NAME}" \
+              --platform "WEB" \
+              --repository "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+              --query "app.appId" \
+              --output text)
+              
+            # Create backend environment
+            aws amplify create-backend-environment \
+              --app-id "${APP_ID}" \
+              --environment-name "prod"
+              
+            echo "Created new app with ID: ${APP_ID}"
+          else
+            APP_ID="${EXISTING_APP}"
+            echo "Using existing app with ID: ${APP_ID}"
+          fi
+          
+          echo "app_id=${APP_ID}" >> $GITHUB_OUTPUT
+        
+      - name: Initialize Amplify
+        run: |
+          APP_ID="${{ steps.create_app.outputs.app_id }}"
+          
+          # Create Amplify configuration files
+          mkdir -p amplify/backend/api/fastapi
+          
+          # Create backend config
+          echo '{
+            "api": {
+              "fastapi": {
+                "service": "Lambda",
+                "providerPlugin": "awscloudformation",
+                "dependsOn": [],
+                "build": true
+              }
+            }
+          }' > amplify/backend/backend-config.json
+          
+          # Create API config
+          echo '{
+            "AWSTemplateFormatVersion": "2010-09-09",
+            "Description": "FastAPI Lambda function configuration",
+            "Parameters": {
+              "env": {
+                "Type": "String"
+              }
+            },
+            "Resources": {
+              "LambdaFunction": {
+                "Type": "AWS::Lambda::Function",
+                "Properties": {
+                  "Code": {
+                    "S3Bucket": {
+                      "Ref": "deploymentBucket"
+                    },
+                    "S3Key": "amplify-builds/fastapi-${env}-latest.zip"
+                  },
+                  "Handler": "src.main.handler",
+                  "Runtime": "python3.11",
+                  "Timeout": 30,
+                  "MemorySize": 256,
+                  "Environment": {
+                    "Variables": {
+                      "ENV": {
+                        "Ref": "env"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }' > amplify/backend/api/fastapi/fastapi-cloudformation-template.json
+          
+      - name: Deploy to Amplify
+        run: |
+          APP_ID="${{ steps.create_app.outputs.app_id }}"
+          amplify pull --appId ${APP_ID} --envName prod --yes
+          amplify push --yes
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }} 
