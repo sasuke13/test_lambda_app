@@ -147,7 +147,7 @@ jobs:
           APP_ID="${{ steps.create_app.outputs.app_id }}"
           BUCKET_NAME="fastapi-lambda-app-${APP_ID}-deployment"
           
-          # Create the CloudFormation template with proper parameter
+          # Create the CloudFormation template with proper parameter and role
           echo '{
             "AWSTemplateFormatVersion": "2010-09-09",
             "Description": "FastAPI Lambda function configuration",
@@ -161,8 +161,29 @@ jobs:
               }
             },
             "Resources": {
+              "LambdaExecutionRole": {
+                "Type": "AWS::IAM::Role",
+                "Properties": {
+                  "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Principal": {
+                          "Service": ["lambda.amazonaws.com"]
+                        },
+                        "Action": ["sts:AssumeRole"]
+                      }
+                    ]
+                  },
+                  "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                  ]
+                }
+              },
               "LambdaFunction": {
                 "Type": "AWS::Lambda::Function",
+                "DependsOn": ["LambdaExecutionRole"],
                 "Properties": {
                   "Code": {
                     "S3Bucket": {"Ref": "deploymentBucket"},
