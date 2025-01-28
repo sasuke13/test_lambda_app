@@ -12,6 +12,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      APP_NAME: "fastapi-lambda-app"
     
     steps:
       - uses: actions/checkout@v3
@@ -35,15 +37,19 @@ jobs:
         
       - name: Configure Amplify
         run: |
-          # Check if app exists
-          if ! aws amplify get-app --app-id de7wiwdtok231 2>/dev/null; then
-            # Create new app if it doesn't exist
-            aws amplify create-app --name "fastapi-lambda-app" --platform "WEB"
+          # Try to get app ID by name
+          APP_ID=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
+          
+          if [ -z "$APP_ID" ]; then
+            echo "Creating new Amplify app..."
+            APP_ID=$(aws amplify create-app --name "${APP_NAME}" --platform "WEB" --query 'app.appId' --output text)
+          else
+            echo "Found existing Amplify app with ID: ${APP_ID}"
           fi
           
           # Initialize Amplify project
           amplify init \
-            --appId de7wiwdtok231 \
+            --appId ${APP_ID} \
             --envName prod \
             --yes
           
@@ -59,14 +65,12 @@ jobs:
 
       - name: Create S3 Bucket and Build
         run: |
-          # Create S3 bucket if it doesn't exist
-          BUCKET_NAME="amplify-fastapi-lambda-${AWS_REGION}"
-          if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
-            aws s3api create-bucket \
-              --bucket "$BUCKET_NAME" \
-              --region "$AWS_REGION" \
-              --create-bucket-configuration LocationConstraint="$AWS_REGION"
-          fi
+          # Get deployment bucket from Amplify backend
+          DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
+            --app-id ${APP_ID} \
+            --environment-name prod \
+            --query 'backendEnvironment.deploymentArtifacts' \
+            --output text)
           
           # Install dependencies
           pip install poetry
@@ -81,7 +85,7 @@ jobs:
           # Create and upload function zip
           cd amplify/backend/api/fastapi
           zip -r function.zip ./*
-          aws s3 cp function.zip s3://${BUCKET_NAME}/amplify-builds/fastapi-prod-latest.zip
+          aws s3 cp function.zip s3://${DEPLOYMENT_BUCKET}/amplify-builds/fastapi-prod-latest.zip
           cd ../../../../
 
       - name: Deploy with Amplify
