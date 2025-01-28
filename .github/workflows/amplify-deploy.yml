@@ -68,24 +68,24 @@ jobs:
           # Export deployment bucket name
           echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
-          # Initialize Amplify project with deployment bucket
+          # Initialize Amplify project with API Gateway configuration
           amplify init \
             --appId ${APP_ID} \
             --envName prod \
             --yes \
-            --categories '{"api":{"deploymentBucket":"'${DEPLOYMENT_BUCKET}'"}}'
+            --categories '{"api":{"deploymentBucket":"'${DEPLOYMENT_BUCKET}'","apiType":"REST"}}'
           
-          # Add API if it doesn't exist
-          if ! amplify api get; then
-            amplify add api \
-              --service Lambda \
-              --name fastapi \
-              --runtime python3.11 \
-              --template "Hello World" \
-              --yes
-          fi
+          # Add API with API Gateway integration
+          amplify add api \
+            --service Lambda \
+            --name fastapi \
+            --runtime python3.11 \
+            --template "REST API with Lambda Integration" \
+            --paths "/,/items,/items/{item_id}" \
+            --methods "GET,GET,POST" \
+            --yes
 
-      - name: Create S3 Bucket and Build
+      - name: Build and Package
         run: |
           # Install dependencies
           pip install poetry
@@ -112,4 +112,17 @@ jobs:
           CI: true
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }} 
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          
+      - name: Get API URL
+        run: |
+          # Get and display the API endpoint URL
+          API_ID=$(aws amplify get-backend-environment \
+            --app-id ${APP_ID} \
+            --environment-name prod \
+            --query 'backendEnvironment.apiId' \
+            --output text)
+          
+          API_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/prod"
+          echo "API_URL=${API_URL}" >> $GITHUB_ENV
+          echo "API is available at: ${API_URL}" 
