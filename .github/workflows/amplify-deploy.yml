@@ -35,39 +35,54 @@ jobs:
         
       - name: Configure Amplify
         run: |
-          APP_NAME="fastapi-lambda-app"
+          # Check if app exists
+          if ! aws amplify get-app --app-id de7wiwdtok231 2>/dev/null; then
+            # Create new app if it doesn't exist
+            aws amplify create-app --name "fastapi-lambda-app" --platform "WEB"
+          fi
           
-          # Pull existing Amplify environment
-          amplify pull \
+          # Initialize Amplify project
+          amplify init \
             --appId de7wiwdtok231 \
             --envName prod \
             --yes
+          
+          # Add API if it doesn't exist
+          if ! amplify api get; then
+            amplify add api \
+              --service Lambda \
+              --name fastapi \
+              --runtime python3.11 \
+              --template "Hello World" \
+              --yes
+          fi
 
-      - name: Build and Package
+      - name: Create S3 Bucket and Build
         run: |
+          # Create S3 bucket if it doesn't exist
+          BUCKET_NAME="amplify-fastapi-lambda-${AWS_REGION}"
+          if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            aws s3api create-bucket \
+              --bucket "$BUCKET_NAME" \
+              --region "$AWS_REGION" \
+              --create-bucket-configuration LocationConstraint="$AWS_REGION"
+          fi
+          
           # Install dependencies
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --without dev
           
-          # Create correct Amplify directory structure
-          mkdir -p test_lambda_app/amplify/backend/api/fastapi/src
-          cp -r src/* test_lambda_app/amplify/backend/api/fastapi/src/
-          cp pyproject.toml poetry.lock test_lambda_app/amplify/backend/api/fastapi/
+          # Create deployment package
+          mkdir -p amplify/backend/api/fastapi/src
+          cp -r src/* amplify/backend/api/fastapi/src/
+          cp pyproject.toml poetry.lock amplify/backend/api/fastapi/
           
-          # Create the function zip
-          cd test_lambda_app/amplify/backend/api/fastapi
-          zip -r ../../../../../function.zip ./*
-          cd ../../../../../
-          
-          # Upload to S3
-          DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
-            --app-id de7wiwdtok231 \
-            --environment-name prod \
-            --query 'backendEnvironment.deploymentArtifacts' \
-            --output text)
-          
-          aws s3 cp function.zip s3://${DEPLOYMENT_BUCKET}/amplify-builds/fastapi-prod-latest.zip
+          # Create and upload function zip
+          cd amplify/backend/api/fastapi
+          zip -r function.zip ./*
+          aws s3 cp function.zip s3://${BUCKET_NAME}/amplify-builds/fastapi-prod-latest.zip
+          cd ../../../../
 
       - name: Deploy with Amplify
         run: |
