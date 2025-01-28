@@ -132,7 +132,7 @@ jobs:
           }
           EOF
           
-          # Create team-provider-info.json
+          # Create team-provider-info.json with actual values
           cat > amplify/team-provider-info.json << EOF
           {
             "prod": {
@@ -141,10 +141,11 @@ jobs:
                 "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-UnauthRole",
                 "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-AuthRole",
                 "Region": "${AWS_REGION}",
-                "DeploymentBucketName": "amplify-${APP_NAME}-prod-deployment",
+                "DeploymentBucketName": "${DEPLOYMENT_BUCKET}",
                 "UnauthRoleName": "amplify-${APP_NAME}-prod-UnauthRole",
                 "StackName": "amplify-${APP_NAME}-prod",
-                "StackId": "arn:aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod"
+                "StackId": "arn:aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod",
+                "AmplifyAppId": "${APP_ID}"
               }
             }
           }
@@ -194,7 +195,8 @@ jobs:
           cat > amplify/backend/api/fastapi/parameters.json << EOF
           {
             "deploymentBucketName": "${DEPLOYMENT_BUCKET}",
-            "env": "prod"
+            "env": "prod",
+            "s3Key": "amplify-builds/fastapi-prod-latest.zip"
           }
           EOF
           
