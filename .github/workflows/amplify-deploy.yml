@@ -37,18 +37,10 @@ jobs:
         run: |
           APP_NAME="fastapi-lambda-app"
           
-          # Initialize Amplify project
-          amplify init \
-            --name ${APP_NAME} \
+          # Pull existing Amplify environment
+          amplify pull \
+            --appId de7wiwdtok231 \
             --envName prod \
-            --yes
-          
-          # Add API
-          amplify add api \
-            --service Lambda \
-            --name fastapi \
-            --runtime python3.11 \
-            --template "Hello World" \
             --yes
 
       - name: Build and Package
@@ -67,10 +59,18 @@ jobs:
           cd amplify/backend/function/fastapi
           zip -r ../../../../function.zip ./*
           cd ../../../../
+          
+          # Upload to S3
+          DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
+            --app-id de7wiwdtok231 \
+            --environment-name prod \
+            --query 'backendEnvironment.deploymentArtifacts' \
+            --output text)
+          
+          aws s3 cp function.zip s3://${DEPLOYMENT_BUCKET}/amplify-builds/fastapi-prod-latest.zip
 
       - name: Deploy with Amplify
         run: |
-          # Push Amplify changes
           amplify push \
             --yes \
             --allow-destructive-updates
