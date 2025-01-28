@@ -7,5 +7,7 @@
   },
   "deploymentBucketName": {
     "Ref": "DeploymentBucketName"
-  }
+  },
+  "s3Key": "amplify-builds/fastapi-${env}-latest.zip",
+  "env": "prod"
 } 

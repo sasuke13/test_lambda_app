@@ -217,9 +217,8 @@ jobs:
             --appId ${APP_ID} \
             --envName prod \
             --yes \
-            --amplify '{"envName":"prod"}' \
-            --providers '{"awscloudformation":{"configLevel":"project","useProfile":false,"accessKeyId":"'${AWS_ACCESS_KEY_ID}'","secretAccessKey":"'${AWS_SECRET_ACCESS_KEY}'","region":"'${AWS_REGION}'"}}' \
-            --categories '{"function":{"restrictAccess":true}}'
+            --amplify "{\"envName\":\"prod\"}" \
+            --providers "{\"awscloudformation\":{\"configLevel\":\"project\",\"useProfile\":false,\"accessKeyId\":\"${AWS_ACCESS_KEY_ID}\",\"secretAccessKey\":\"${AWS_SECRET_ACCESS_KEY}\",\"region\":\"${AWS_REGION}\"}}"
 
           # Add API after initialization
           amplify add api \
