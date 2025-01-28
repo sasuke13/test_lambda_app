@@ -68,22 +68,40 @@ jobs:
           # Export deployment bucket name
           echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
-          # Initialize Amplify project with API Gateway configuration
-          amplify init \
-            --appId ${APP_ID} \
-            --envName prod \
-            --yes \
-            --categories '{"api":{"deploymentBucket":"'${DEPLOYMENT_BUCKET}'","apiType":"REST"}}'
-          
-          # Add API with API Gateway integration
-          amplify add api \
-            --service Lambda \
-            --name fastapi \
-            --runtime python3.11 \
-            --template "REST API with Lambda Integration" \
-            --paths "/,/items,/items/{item_id}" \
-            --methods "GET,GET,POST" \
-            --yes
+          # Check if environment exists and pull if it does
+          if aws amplify get-backend-environment --app-id ${APP_ID} --environment-name prod &>/dev/null; then
+            echo "Pulling existing environment..."
+            amplify pull \
+              --appId ${APP_ID} \
+              --envName prod \
+              --yes
+            
+            # Update existing API
+            amplify update api \
+              --service Lambda \
+              --name fastapi \
+              --runtime python3.11 \
+              --template "REST API with Lambda Integration" \
+              --paths "/,/items,/items/{item_id}" \
+              --methods "GET,GET,POST" \
+              --yes
+          else
+            echo "Initializing new environment..."
+            amplify init \
+              --appId ${APP_ID} \
+              --envName prod \
+              --yes
+            
+            # Add new API
+            amplify add api \
+              --service Lambda \
+              --name fastapi \
+              --runtime python3.11 \
+              --template "REST API with Lambda Integration" \
+              --paths "/,/items,/items/{item_id}" \
+              --methods "GET,GET,POST" \
+              --yes
+          fi
 
       - name: Build and Package
         run: |
