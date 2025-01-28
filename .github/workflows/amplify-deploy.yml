@@ -186,14 +186,49 @@ jobs:
           }
           EOF
 
-          # Initialize Amplify project with specific configurations
+          # Create amplify.json
+          cat > amplify/amplify.json << EOF
+          {
+            "features": {
+              "graphqltransformer": {
+                "transformerversion": 2
+              },
+              "keytransformer": {
+                "defaultquery": true
+              }
+            }
+          }
+          EOF
+
+          # Create CLI config
+          cat > ~/.amplify/cli.json << EOF
+          {
+            "features": {
+              "auth": {
+                "enableCaseInsensitivity": true,
+                "useEnabledMfas": true
+              }
+            }
+          }
+          EOF
+
+          # Initialize Amplify project with minimal configuration
           amplify init \
             --appId ${APP_ID} \
             --envName prod \
             --yes \
-            --categories '{"api":{"deploymentBucketName":"'${DEPLOYMENT_BUCKET}'","apiType":"REST"}}' \
-            --providers '{"awscloudformation":{"configLevel":"project","useProfile":false,"profileName":"default","accessKeyId":"'${AWS_ACCESS_KEY_ID}'","secretAccessKey":"'${AWS_SECRET_ACCESS_KEY}'","region":"'${AWS_REGION}'"}}' \
-            --frontend '{"javascript":{"config":{"SourceDir":"src","DistributionDir":"dist","BuildCommand":"npm run-script build","StartCommand":"npm run-script start"}}}'
+            --amplify "{\"envName\":\"prod\"}" \
+            --providers "{\"awscloudformation\":{\"configLevel\":\"project\",\"useProfile\":false,\"accessKeyId\":\"${AWS_ACCESS_KEY_ID}\",\"secretAccessKey\":\"${AWS_SECRET_ACCESS_KEY}\",\"region\":\"${AWS_REGION}\"}}"
+
+          # Add API after initialization
+          amplify add api \
+            --service Lambda \
+            --name fastapi \
+            --runtime python3.11 \
+            --template "REST" \
+            --paths "/api" \
+            --resourceName fastapi \
+            --yes
 
       - name: Build and Package
         run: |
