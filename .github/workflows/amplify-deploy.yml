@@ -37,28 +37,18 @@ jobs:
         run: |
           APP_NAME="fastapi-lambda-app"
           
-          # Try to get existing app
-          EXISTING_APP=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
+          # Initialize Amplify project
+          amplify init \
+            --name ${APP_NAME} \
+            --envName prod \
+            --yes
           
-          if [ -z "$EXISTING_APP" ]; then
-            echo "Creating new Amplify app..."
-            APP_ID=$(aws amplify create-app \
-              --name "${APP_NAME}" \
-              --platform "WEB" \
-              --repository "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
-              --query "app.appId" \
-              --output text)
-              
-            aws amplify create-backend-environment \
-              --app-id "${APP_ID}" \
-              --environment-name "prod"
-          else
-            APP_ID="${EXISTING_APP}"
-          fi
-          
-          # Configure Amplify CLI
-          echo "amplify configure project" | amplify configure project \
-            --amplify "{\"appId\":\"${APP_ID}\",\"envName\":\"prod\"}" \
+          # Add API
+          amplify add api \
+            --service Lambda \
+            --name fastapi \
+            --runtime python3.11 \
+            --template "Hello World" \
             --yes
 
       - name: Build and Package

@@ -1,16 +1,20 @@
 version: 1
 backend:
   phases:
-    build:
+    preBuild:
       commands:
         - pip install poetry
         - poetry config virtualenvs.create false
-        - poetry install --no-dev
-        - cp -r src/* function/
-    artifacts:
-      baseDirectory: function
-      files:
-        - '**/*'
+    build:
+      commands:
+        - poetry install --without dev
+        - mkdir -p ./function
+        - cp -r src/* ./function/
+        - cp pyproject.toml poetry.lock ./function/
+  artifacts:
+    baseDirectory: function
+    files:
+      - '**/*'
 frontend:
   phases:
     build:
