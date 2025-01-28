@@ -106,19 +106,19 @@ jobs:
           }
           EOF
           
-          # Create team provider info
+          # Create team-provider-info.json
           cat > amplify/team-provider-info.json << EOF
           {
             "prod": {
               "awscloudformation": {
-                "Region": "$AWS_REGION",
-                "DeploymentBucketName": "$DEPLOYMENT_BUCKET",
-                "UnauthRoleName": "amplify-${APP_NAME}-prod-unauthRole",
+                "AuthRoleName": "amplify-${APP_NAME}-prod-AuthRole",
+                "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-UnauthRole",
+                "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-AuthRole",
+                "Region": "${AWS_REGION}",
+                "DeploymentBucketName": "amplify-${APP_NAME}-prod-deployment",
+                "UnauthRoleName": "amplify-${APP_NAME}-prod-UnauthRole",
                 "StackName": "amplify-${APP_NAME}-prod",
-                "StackId": "aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod/",
-                "AuthRoleName": "amplify-${APP_NAME}-prod-authRole",
-                "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-unauthRole",
-                "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-authRole"
+                "StackId": "arn:aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod"
               }
             }
           }
@@ -212,7 +212,7 @@ jobs:
           }
           EOF
 
-          # Initialize Amplify project with minimal configuration
+          # Initialize Amplify project
           amplify init \
             --appId ${APP_ID} \
             --envName prod \
