@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "apiName": "fastapi",
+    "serviceName": "Lambda",
+    "defaultFunctionName": "fastapi",
+    "runtime": "python3.11",
+    "apiPath": "/api"
+  }
+} 
