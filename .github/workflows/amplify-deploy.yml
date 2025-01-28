@@ -72,6 +72,36 @@ jobs:
           # Export deployment bucket name
           echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
+          # Create AWS configuration file
+          cat > amplify/backend/awscloudformation/config.json << EOF
+          {
+            "configLevel": "project",
+            "useProfile": false,
+            "profileName": "default",
+            "accessKeyId": "$AWS_ACCESS_KEY_ID",
+            "secretAccessKey": "$AWS_SECRET_ACCESS_KEY",
+            "region": "$AWS_REGION"
+          }
+          EOF
+          
+          # Create team provider info
+          cat > amplify/team-provider-info.json << EOF
+          {
+            "prod": {
+              "awscloudformation": {
+                "Region": "$AWS_REGION",
+                "DeploymentBucketName": "$DEPLOYMENT_BUCKET",
+                "UnauthRoleName": "amplify-${APP_NAME}-prod-unauthRole",
+                "StackName": "amplify-${APP_NAME}-prod",
+                "StackId": "aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod/",
+                "AuthRoleName": "amplify-${APP_NAME}-prod-authRole",
+                "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-unauthRole",
+                "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-authRole"
+              }
+            }
+          }
+          EOF
+          
           # Create project config file
           cat > amplify/.config/project-config.json << EOF
           {
