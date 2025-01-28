@@ -40,6 +40,7 @@ jobs:
           # Create necessary directories
           mkdir -p amplify/.config
           mkdir -p amplify/backend/api/fastapi
+          mkdir -p amplify/backend/awscloudformation
           
           # Try to get app ID by name
           APP_ID=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
