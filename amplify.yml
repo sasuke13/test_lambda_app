@@ -6,11 +6,11 @@ backend:
         - pip install poetry
         - poetry config virtualenvs.create false
         - poetry install --no-dev
-        - poetry run pip freeze > requirements.txt
-  artifacts:
-    baseDirectory: /
-    files:
-      - '**/*'
+        - cp -r src/* function/
+    artifacts:
+      baseDirectory: function
+      files:
+        - '**/*'
 frontend:
   phases:
     build:
