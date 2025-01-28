@@ -43,15 +43,54 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
+          # Set deployment bucket name first
+          DEPLOYMENT_BUCKET="amplify-${APP_NAME}-prod-deployment"
+          echo "Setting up deployment bucket: ${DEPLOYMENT_BUCKET}"
+          
+          # Check if bucket exists and create/update if needed
+          if aws s3api head-bucket --bucket "${DEPLOYMENT_BUCKET}" 2>/dev/null; then
+            echo "Bucket exists, ensuring correct configuration..."
+            # Update bucket configuration
+            aws s3api put-bucket-versioning \
+              --bucket "${DEPLOYMENT_BUCKET}" \
+              --versioning-configuration Status=Enabled
+          else
+            echo "Creating new deployment bucket..."
+            if [ "${AWS_REGION}" = "us-east-1" ]; then
+              aws s3api create-bucket \
+                --bucket "${DEPLOYMENT_BUCKET}" \
+                --region "${AWS_REGION}"
+            else
+              aws s3api create-bucket \
+                --bucket "${DEPLOYMENT_BUCKET}" \
+                --region "${AWS_REGION}" \
+                --create-bucket-configuration LocationConstraint="${AWS_REGION}"
+            fi
+            
+            # Enable versioning
+            aws s3api put-bucket-versioning \
+              --bucket "${DEPLOYMENT_BUCKET}" \
+              --versioning-configuration Status=Enabled
+            
+            # Wait for bucket to be fully available
+            echo "Waiting for bucket to be available..."
+            aws s3api wait bucket-exists --bucket "${DEPLOYMENT_BUCKET}"
+          fi
+          
+          # Verify bucket is accessible
+          if ! aws s3 ls "s3://${DEPLOYMENT_BUCKET}"; then
+            echo "Error: Cannot access deployment bucket"
+            exit 1
+          fi
+          
+          # Export bucket name for later use
+          echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
+
           # Create necessary directories with verbose output
           mkdir -pv amplify/.config
           mkdir -pv amplify/backend/api/fastapi
           mkdir -pv amplify/backend/awscloudformation
           mkdir -pv amplify/backend/function/fastapi/src
-          
-          # Verify deployment bucket
-          echo "Checking deployment bucket: ${DEPLOYMENT_BUCKET}"
-          aws s3 ls s3://${DEPLOYMENT_BUCKET} || echo "Bucket not accessible"
           
           # Create AWS credentials file
           mkdir -p ~/.aws
@@ -80,40 +119,6 @@ jobs:
           
           # Export APP_ID for subsequent steps
           echo "APP_ID=${APP_ID}" >> $GITHUB_ENV
-          
-          # Create deployment bucket name first
-          DEPLOYMENT_BUCKET="amplify-${APP_NAME}-deployment-${AWS_REGION}"
-          echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
-
-          # Create deployment bucket if it doesn't exist
-          if ! aws s3api head-bucket --bucket "$DEPLOYMENT_BUCKET" 2>/dev/null; then
-            echo "Creating deployment bucket: $DEPLOYMENT_BUCKET"
-            if [ "$AWS_REGION" = "us-east-1" ]; then
-              aws s3api create-bucket \
-                --bucket "$DEPLOYMENT_BUCKET" \
-                --region "$AWS_REGION"
-            else
-              aws s3api create-bucket \
-                --bucket "$DEPLOYMENT_BUCKET" \
-                --region "$AWS_REGION" \
-                --create-bucket-configuration LocationConstraint="$AWS_REGION"
-            fi
-            
-            # Enable versioning on the bucket
-            aws s3api put-bucket-versioning \
-              --bucket "$DEPLOYMENT_BUCKET" \
-              --versioning-configuration Status=Enabled
-
-            # Wait for bucket to be available
-            aws s3api wait bucket-exists --bucket "$DEPLOYMENT_BUCKET"
-          fi
-
-          # Verify bucket is accessible
-          echo "Verifying bucket access..."
-          aws s3 ls s3://${DEPLOYMENT_BUCKET} || {
-            echo "Error: Cannot access deployment bucket"
-            exit 1
-          }
           
           # Create AWS configuration file
           cat > amplify/backend/awscloudformation/config.json << EOF
