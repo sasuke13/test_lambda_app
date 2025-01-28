@@ -68,40 +68,52 @@ jobs:
           # Export deployment bucket name
           echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
-          # Check if environment exists and pull if it does
-          if aws amplify get-backend-environment --app-id ${APP_ID} --environment-name prod &>/dev/null; then
-            echo "Pulling existing environment..."
-            amplify pull \
-              --appId ${APP_ID} \
-              --envName prod \
-              --yes
-            
-            # Update existing API
-            amplify update api \
-              --service Lambda \
-              --name fastapi \
-              --runtime python3.11 \
-              --template "REST API with Lambda Integration" \
-              --paths "/,/items,/items/{item_id}" \
-              --methods "GET,GET,POST" \
-              --yes
-          else
-            echo "Initializing new environment..."
-            amplify init \
-              --appId ${APP_ID} \
-              --envName prod \
-              --yes
-            
-            # Add new API
-            amplify add api \
-              --service Lambda \
-              --name fastapi \
-              --runtime python3.11 \
-              --template "REST API with Lambda Integration" \
-              --paths "/,/items,/items/{item_id}" \
-              --methods "GET,GET,POST" \
-              --yes
-          fi
+          # Create amplify config file
+          cat > amplify/.config/project-config.json << EOF
+          {
+            "projectName": "${APP_NAME}",
+            "version": "3.1",
+            "frontend": "javascript",
+            "javascript": {
+              "framework": "none",
+              "config": {
+                "SourceDir": "src",
+                "DistributionDir": "dist",
+                "BuildCommand": "npm run-script build",
+                "StartCommand": "npm run-script start"
+              }
+            },
+            "providers": ["awscloudformation"]
+          }
+          EOF
+          
+          # Create backend config
+          mkdir -p amplify/backend/api/fastapi
+          cat > amplify/backend/api/fastapi/parameters.json << EOF
+          {
+            "deploymentBucketName": "${DEPLOYMENT_BUCKET}",
+            "env": "prod"
+          }
+          EOF
+          
+          # Initialize Amplify project
+          amplify init \
+            --appId ${APP_ID} \
+            --envName prod \
+            --yes
+          
+          # Remove any existing API
+          amplify remove api
+          
+          # Add REST API
+          amplify add api \
+            --service Lambda \
+            --name fastapi \
+            --runtime python3.11 \
+            --template "REST" \
+            --resourceName fastapi \
+            --path /api \
+            --yes
 
       - name: Build and Package
         run: |
