@@ -47,6 +47,9 @@ jobs:
             echo "Found existing Amplify app with ID: ${APP_ID}"
           fi
           
+          # Export APP_ID for subsequent steps
+          echo "APP_ID=${APP_ID}" >> $GITHUB_ENV
+          
           # Initialize Amplify project
           amplify init \
             --appId ${APP_ID} \
@@ -67,7 +70,7 @@ jobs:
         run: |
           # Get deployment bucket from Amplify backend
           DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
-            --app-id ${APP_ID} \
+            --app-id ${{ env.APP_ID }} \
             --environment-name prod \
             --query 'backendEnvironment.deploymentArtifacts' \
             --output text)
