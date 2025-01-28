@@ -37,6 +37,10 @@ jobs:
         
       - name: Configure Amplify
         run: |
+          # Create necessary directories
+          mkdir -p amplify/.config
+          mkdir -p amplify/backend/api/fastapi
+          
           # Try to get app ID by name
           APP_ID=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
           
@@ -68,7 +72,7 @@ jobs:
           # Export deployment bucket name
           echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
-          # Create amplify config file
+          # Create project config file
           cat > amplify/.config/project-config.json << EOF
           {
             "projectName": "${APP_NAME}",
@@ -84,6 +88,26 @@ jobs:
               }
             },
             "providers": ["awscloudformation"]
+          }
+          EOF
+          
+          # Create local-env-info.json
+          cat > amplify/.config/local-env-info.json << EOF
+          {
+            "projectPath": "$(pwd)",
+            "defaultEditor": "vscode",
+            "envName": "prod"
+          }
+          EOF
+          
+          # Create local-aws-info.json
+          cat > amplify/.config/local-aws-info.json << EOF
+          {
+            "prod": {
+              "configLevel": "project",
+              "useProfile": false,
+              "awsConfigFilePath": "~/.aws/config"
+            }
           }
           EOF
           
