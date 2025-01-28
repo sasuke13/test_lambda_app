@@ -50,21 +50,28 @@ jobs:
           # Export APP_ID for subsequent steps
           echo "APP_ID=${APP_ID}" >> $GITHUB_ENV
           
-          # Initialize Amplify project
-          amplify init \
-            --appId ${APP_ID} \
-            --envName prod \
-            --yes
-          
-          # Add API if it doesn't exist
-          if ! amplify api get; then
-            amplify add api \
-              --service Lambda \
-              --name fastapi \
-              --runtime python3.11 \
-              --template "Hello World" \
+          # Pull existing environment if it exists
+          if aws amplify get-backend-environment --app-id ${APP_ID} --environment-name prod &>/dev/null; then
+            echo "Pulling existing environment..."
+            amplify pull \
+              --appId ${APP_ID} \
+              --envName prod \
+              --yes
+          else
+            echo "Initializing new environment..."
+            amplify init \
+              --appId ${APP_ID} \
+              --envName prod \
               --yes
           fi
+          
+          # Update API configuration
+          amplify update api \
+            --service Lambda \
+            --name fastapi \
+            --runtime python3.11 \
+            --template "Hello World" \
+            --yes
 
       - name: Create S3 Bucket and Build
         run: |
