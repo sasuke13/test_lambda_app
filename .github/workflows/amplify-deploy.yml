@@ -50,15 +50,15 @@ jobs:
           poetry config virtualenvs.create false
           poetry install --without dev
           
-          # Create deployment package
-          mkdir -p amplify/backend/function/fastapi/src
-          cp -r src/* amplify/backend/function/fastapi/src/
-          cp pyproject.toml poetry.lock amplify/backend/function/fastapi/
+          # Create correct Amplify directory structure
+          mkdir -p test_lambda_app/amplify/backend/api/fastapi/src
+          cp -r src/* test_lambda_app/amplify/backend/api/fastapi/src/
+          cp pyproject.toml poetry.lock test_lambda_app/amplify/backend/api/fastapi/
           
           # Create the function zip
-          cd amplify/backend/function/fastapi
-          zip -r ../../../../function.zip ./*
-          cd ../../../../
+          cd test_lambda_app/amplify/backend/api/fastapi
+          zip -r ../../../../../function.zip ./*
+          cd ../../../../../
           
           # Upload to S3
           DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
