@@ -8,11 +8,11 @@ backend:
     build:
       commands:
         - poetry install --without dev
-        - mkdir -p ./function
-        - cp -r src/* ./function/
-        - cp pyproject.toml poetry.lock ./function/
+        - mkdir -p ./amplify/backend/function/fastapi/src
+        - cp -r src/* ./amplify/backend/function/fastapi/src/
+        - cp pyproject.toml poetry.lock ./amplify/backend/function/fastapi/
   artifacts:
-    baseDirectory: function
+    baseDirectory: amplify/backend/function/fastapi
     files:
       - '**/*'
 frontend:

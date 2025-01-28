@@ -62,6 +62,11 @@ jobs:
           mkdir -p amplify/backend/function/fastapi/src
           cp -r src/* amplify/backend/function/fastapi/src/
           cp pyproject.toml poetry.lock amplify/backend/function/fastapi/
+          
+          # Create the function zip
+          cd amplify/backend/function/fastapi
+          zip -r ../../../../function.zip ./*
+          cd ../../../../
 
       - name: Deploy with Amplify
         run: |
