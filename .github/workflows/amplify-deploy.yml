@@ -50,38 +50,37 @@ jobs:
           # Export APP_ID for subsequent steps
           echo "APP_ID=${APP_ID}" >> $GITHUB_ENV
           
-          # Pull existing environment if it exists
-          if aws amplify get-backend-environment --app-id ${APP_ID} --environment-name prod &>/dev/null; then
-            echo "Pulling existing environment..."
-            amplify pull \
-              --appId ${APP_ID} \
-              --envName prod \
-              --yes
-          else
-            echo "Initializing new environment..."
-            amplify init \
-              --appId ${APP_ID} \
-              --envName prod \
-              --yes
+          # Create deployment bucket if it doesn't exist
+          DEPLOYMENT_BUCKET="amplify-${APP_NAME}-${APP_ID}-deployment"
+          if ! aws s3api head-bucket --bucket "$DEPLOYMENT_BUCKET" 2>/dev/null; then
+            aws s3api create-bucket \
+              --bucket "$DEPLOYMENT_BUCKET" \
+              --region "$AWS_REGION" \
+              --create-bucket-configuration LocationConstraint="$AWS_REGION"
           fi
           
-          # Update API configuration
-          amplify update api \
-            --service Lambda \
-            --name fastapi \
-            --runtime python3.11 \
-            --template "Hello World" \
-            --yes
+          # Export deployment bucket name
+          echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
+          
+          # Initialize Amplify project with deployment bucket
+          amplify init \
+            --appId ${APP_ID} \
+            --envName prod \
+            --yes \
+            --categories '{"api":{"deploymentBucket":"'${DEPLOYMENT_BUCKET}'"}}'
+          
+          # Add API if it doesn't exist
+          if ! amplify api get; then
+            amplify add api \
+              --service Lambda \
+              --name fastapi \
+              --runtime python3.11 \
+              --template "Hello World" \
+              --yes
+          fi
 
       - name: Create S3 Bucket and Build
         run: |
-          # Get deployment bucket from Amplify backend
-          DEPLOYMENT_BUCKET=$(aws amplify get-backend-environment \
-            --app-id ${{ env.APP_ID }} \
-            --environment-name prod \
-            --query 'backendEnvironment.deploymentArtifacts' \
-            --output text)
-          
           # Install dependencies
           pip install poetry
           poetry config virtualenvs.create false
