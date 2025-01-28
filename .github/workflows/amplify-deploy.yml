@@ -56,7 +56,7 @@ jobs:
           # Install dependencies
           pip install poetry
           poetry config virtualenvs.create false
-          poetry install --no-dev
+          poetry install --without dev
           
           # Create deployment package
           mkdir -p amplify/backend/function/fastapi/src
