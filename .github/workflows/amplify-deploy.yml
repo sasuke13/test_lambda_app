@@ -76,8 +76,11 @@ jobs:
           # Export APP_ID for subsequent steps
           echo "APP_ID=${APP_ID}" >> $GITHUB_ENV
           
+          # Create deployment bucket name
+          DEPLOYMENT_BUCKET="amplify-${APP_NAME}-deployment-${AWS_REGION}"
+          echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
+
           # Create deployment bucket if it doesn't exist
-          DEPLOYMENT_BUCKET="amplify-${APP_NAME}-${APP_ID}-deployment"
           if ! aws s3api head-bucket --bucket "$DEPLOYMENT_BUCKET" 2>/dev/null; then
             if [ "$AWS_REGION" = "us-east-1" ]; then
               aws s3api create-bucket \
@@ -89,10 +92,12 @@ jobs:
                 --region "$AWS_REGION" \
                 --create-bucket-configuration LocationConstraint="$AWS_REGION"
             fi
+            
+            # Enable versioning on the bucket
+            aws s3api put-bucket-versioning \
+              --bucket "$DEPLOYMENT_BUCKET" \
+              --versioning-configuration Status=Enabled
           fi
-          
-          # Export deployment bucket name
-          echo "DEPLOYMENT_BUCKET=${DEPLOYMENT_BUCKET}" >> $GITHUB_ENV
           
           # Create AWS configuration file
           cat > amplify/backend/awscloudformation/config.json << EOF

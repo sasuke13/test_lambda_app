@@ -1,14 +1,14 @@
 {
   "prod": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-fastapilambda-prod-AuthRole",
-      "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-fastapilambda-prod-UnauthRole",
-      "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-fastapilambda-prod-AuthRole",
+      "AuthRoleName": "amplify-${APP_NAME}-prod-AuthRole",
+      "UnauthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-UnauthRole",
+      "AuthRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/amplify-${APP_NAME}-prod-AuthRole",
       "Region": "${AWS_REGION}",
-      "DeploymentBucketName": "amplify-fastapilambda-prod-deployment",
-      "UnauthRoleName": "amplify-fastapilambda-prod-UnauthRole",
-      "StackName": "amplify-fastapilambda-prod",
-      "StackId": "arn:aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-fastapilambda-prod"
+      "DeploymentBucketName": "${DEPLOYMENT_BUCKET}",
+      "UnauthRoleName": "amplify-${APP_NAME}-prod-UnauthRole",
+      "StackName": "amplify-${APP_NAME}-prod",
+      "StackId": "arn:aws:cloudformation:${AWS_REGION}:${AWS_ACCOUNT_ID}:stack/amplify-${APP_NAME}-prod"
     }
   }
 } 

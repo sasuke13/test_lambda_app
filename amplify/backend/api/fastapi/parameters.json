@@ -5,9 +5,7 @@
   "unauthRoleName": {
     "Ref": "UnauthRoleName"
   },
-  "deploymentBucketName": {
-    "Ref": "DeploymentBucketName"
-  },
+  "deploymentBucketName": "${DEPLOYMENT_BUCKET}",
   "s3Key": "amplify-builds/fastapi-${env}-latest.zip",
   "env": "prod"
 } 
