@@ -36,11 +36,32 @@ jobs:
           amplify --version
         
       - name: Configure Amplify
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           # Create necessary directories
           mkdir -p amplify/.config
           mkdir -p amplify/backend/api/fastapi
           mkdir -p amplify/backend/awscloudformation
+          
+          # Create AWS credentials file
+          mkdir -p ~/.aws
+          cat > ~/.aws/credentials << EOF
+          [default]
+          aws_access_key_id = ${AWS_ACCESS_KEY_ID}
+          aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+          region = ${AWS_REGION}
+          EOF
+          
+          cat > ~/.aws/config << EOF
+          [default]
+          region = ${AWS_REGION}
+          output = json
+          EOF
           
           # Try to get app ID by name
           APP_ID=$(aws amplify list-apps --query "apps[?name=='${APP_NAME}'].appId" --output text)
