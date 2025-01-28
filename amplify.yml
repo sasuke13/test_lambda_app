@@ -11,6 +11,8 @@ backend:
         - mkdir -p ./amplify/backend/function/fastapi/src
         - cp -r src/* ./amplify/backend/function/fastapi/src/
         - cp pyproject.toml poetry.lock ./amplify/backend/function/fastapi/
+        - mkdir -p ./amplify/backend/api/fastapi
+        - cp amplify/backend/api/fastapi/fastapi-cloudformation-template.json ./amplify/backend/api/fastapi/
   artifacts:
     baseDirectory: amplify/backend/function/fastapi
     files:
